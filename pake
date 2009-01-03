@@ -26,7 +26,7 @@
 #
 #++
 
-our $VERSION = '0.2';
+our $VERSION = '0.21';
 
 use strict;
 use warnings;
@@ -116,25 +116,34 @@ __END__
 
 =head1 AUTHOR
 
-    Krzysztof Suchomski
+Krzysztof Suchomski
 
     Contact:
     krzysztof.suchomski at gmail dot com
 
 =head1 SYNOPSIS
 
-    Calling program:
+Calling program:
+
     pake [options] [tasks]
 
 =head1 DESCRIPTION
 
-Pakefile is a script where you define task and their dependencies. Within the file you can access to all enviroment variables,
-pake program run task specified in the command line and executes it with dependencies derfined in Pakefile
+Pakefile is a script where you define tasks and their dependencies. Within the Pakefile you can access any previosuly defined object using Pake::Application 
+
+pake program run task specified in the command line and executes it with dependencies defined in Pakefile.
+
+pake comes with predefined tasks for file and directory manipulations and for running tests. For details refer to other Modules
+
+Pakefile script is a normal perl scipt, by default executed with:
+
+	use strict;
+	use warnings;
 
 =head1 OPTIONS
     
     -T, prints all tasks with descriptions defined in the Pakefile 
-    -f FILE, changes the file name to the specified, default Pakefile
+    -f FILE, changes the script file name to the specified, default Pakefile
     -h, print help contents
     -d DIR, changes the working directory
     -D,  prints all tasks with dependencies
@@ -143,39 +152,42 @@ pake program run task specified in the command line and executes it with depende
 
 =head1 EXAMPLE PAKEFILE
 
-#default task
-default "test2";
+	#default task
+  	default "test2";
+	
+	desc "task simply prints test";
+	task {
+		print "test\n";
+	} "test";
+	
+	desc "task test1 depends on test"
+	task {
+		print "test1\n";
+	} "test1" => ["test"];
+	
+	desc "task test2 depends on test and test1";
+	task {
+		print "test2\n";
+	}
 
-desc "task simply prints test";
-task {
-     print "test\n";
-} "test";
-
-task {
-     print "test1\n";
-     use Pod::Html;
-} "test1" => ["test"];
-
-desc "another boring description";
-task {
-     print "test2\n";
-} "test2"=> ["test", "test1"];
-
-#run: pake src/com/test
-desc "Directory Task";
-directory{
-
-} "src/com/test";
-
-file {} "biblioteka.c" => [];
-file {
-    `gcc -c biblioteka.c`
-} "biblioteka.o" => ["src/com/test","biblioteka.c"];
-
-file {
-    `gcc -o program program.c biblioteka.o`
-} "program" => ["biblioteka.o"];
-
-1;
+	#run: pake src/com/test
+	desc "Directory Task, it will be executed only if directory does not exists";
+	directory{
+	
+	} "src/com/test";
+	
+	#file dependencies are executed only if the files created by tasks changed
+	file {} "biblioteka.c" => [];
+	
+	file {
+		`gcc -c biblioteka.c`
+	} "biblioteka.o" => ["src/com/test","biblioteka.c"];
+	
+	file {
+	    `gcc -o program program.c biblioteka.o`
+	} "program" => ["biblioteka.o"];
+	
+	#End script with something true
+	1;
 
 =cut
